@@ -1,0 +1,98 @@
+﻿require("framework.System")
+
+local Context = CS.Loxodon.Framework.Contexts.Context
+local SimpleCommand = CS.Loxodon.Framework.Commands.SimpleCommand
+local AsyncTask = CS.Loxodon.Framework.Asynchronous["AsyncTask`1[System.Object]"]
+
+local ObservableObject = require("framework.ObservableObject")
+local ObservableDictionary = require("framework.ObservableDictionary")
+local InteractionRequest = require("framework.InteractionRequest")
+
+---
+--模块
+--@module LoginViewModel
+local M=class("LoginViewModel",ObservableObject)
+
+--[[--
+构造函数
+@param #table self
+@param #table t 初始化参数
+]]
+function M:ctor(t)
+	M.base(self).ctor(self,t)
+
+	self.username = self.globalPreferences:GetString("LAST_USERNAME", "");
+	self.password = ""
+	self.account = nil
+	self.errors = ObservableDictionary()
+
+	self.loginCommand = SimpleCommand(function() self:login() end,true)
+	self.cancelCommand = SimpleCommand(function() self.interactionFinished:Raise(nil) end,true)
+
+	self.interactionFinished = InteractionRequest(self)
+	self.toastRequest = InteractionRequest(self)
+end
+
+function M:validateUsername()
+	if not self.username or self.username == '' or not string.gmatch(self.username, "^[a-zA-Z0-9_-]{4,12}$") then
+		self.errors:set_Item("username",self.localization:GetText("login.validation.username.error", "Please enter a valid username."))
+		return false
+	else
+		self.errors:Remove("username");
+		return true
+	end
+end
+
+function M:validatePassword()
+	if not self.password or self.password == '' or not string.gmatch(self.password, "^[a-zA-Z0-9_-]{4,12}$") then
+		self.errors:set_Item("password",self.localization:GetText("login.validation.password.error", "Please enter a valid password."))
+		return false
+	else
+		self.errors:Remove("password");
+		return true
+	end
+end
+
+function M:login()
+	self.account = nil;
+    self.loginCommand.Enabled = false --by databinding, auto set button.interactable = false.
+
+	local task = nil
+
+	if not (self:validateUsername() and self:validatePassword()) then
+		task = AsyncTask(function() return nil end)
+	else
+		task = AsyncTask(function()
+            local result = self.accountService:Login(self.username, self.password)
+            local account = result:Synchronized():WaitForResult()
+            if account then            
+                Context.GetApplicationContext():GetMainLoopExcutor():RunOnMainThread(function()
+                    self.globalPreferences:SetString("LAST_USERNAME", self.username)
+                    self.globalPreferences:Save()
+                end)
+            end
+            return account
+        end)
+	end
+
+	task:OnPostExecute(function(account)
+        if account then
+            --login success
+
+            self.account = account
+            self.interactionFinished:Raise(nil) --Interaction completed, request to close the login window 
+        else 
+            --Login failure
+
+            local tipContent = self.localization:GetText("login.failure.tip", "Login failure.")
+            self.toastRequest:Raise(tipContent) --show toast
+        end
+    end):OnError(function(e)
+        local tipContent = self.localization:GetText("login.exception.tip", "Login exception.")
+        self.toastRequest:Raise(tipContent) --show toast
+    end):OnFinish(function()
+        self.loginCommand.Enabled = true --by databinding, auto set button.interactable = true.
+    end):Start()
+end
+
+return M

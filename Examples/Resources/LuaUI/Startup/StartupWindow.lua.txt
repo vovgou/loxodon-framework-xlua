@@ -1,0 +1,63 @@
+﻿require("framework.System")
+
+local Loading = CS.Loxodon.Framework.Views.Loading
+local Context = CS.Loxodon.Framework.Contexts.Context
+
+local StartupViewModel = require("LuaUI.Startup.StartupViewModel")
+
+---
+--模块
+--@module StartupWindow
+local M=class("StartupWindow",target)
+
+function M:onCreate(bundle)
+	self.viewModel = StartupViewModel()
+
+	self:BindingContext().DataContext = self.viewModel
+
+	local context = Context.GetApplicationContext() 
+
+	self.locator = context:GetService("IUIViewLocator")
+
+	local bindingSet = self:CreateBindingSet()
+
+	bindingSet:Bind():For("onOpenLoginWindow"):To("loginRequest")
+	bindingSet:Bind():For("onDismissRequest"):To("dismissRequest")
+
+	bindingSet:Bind(self.progressBarSlider):For("value", "onValueChanged"):To("progressBar.progress"):TwoWay()
+	bindingSet:Bind(self.progressBarSlider.gameObject):For("activeSelf"):To("progressBar.enable"):OneWay()
+	bindingSet:Bind(self.progressBarText):For("text"):ToExpression(function(vm) return string.format("%0.2f%%",vm.progressBar.progress * 100) end,"progressBar.progress"):OneWay()
+	bindingSet:Bind(self.tipText):For("text"):To("progressBar.tip"):OneWay()
+	bindingSet:Bind(self.button):For("onClick"):To("command"):OneWay()
+	bindingSet:Build()
+
+	self.viewModel:unzip()
+end
+
+function M:onDismissRequest(sender, args)
+	self:Dismiss()
+end
+
+function M:onOpenLoginWindow(sender, args)
+	local loginWindow = self.locator:LoadWindow(self.WindowManager, "LuaUI/Logins/Login"); 
+
+	local callback = args.Callback;
+	local loginViewModel = args.Context;
+
+	if callback then
+		local handler = null;
+		handler = function(window, e)
+			loginWindow:OnDismissed("-",handler)
+			if callback then
+				callback()
+			end
+		end
+		loginWindow:OnDismissed("+",handler)
+	end
+	
+	loginWindow:SetDataContext(loginViewModel)
+	loginWindow:Create()	
+	loginWindow:Show()
+end
+
+return M

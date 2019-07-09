@@ -1,0 +1,79 @@
+require("framework.System")
+
+local LogManager = CS.Loxodon.Log.LogManager
+local Path = CS.System.IO.Path
+
+local function toname(name)
+	local s = name or "";
+	s = string.gsub(s,"^@","")
+	s = string.gsub(s,"%.lua","")
+	s = string.gsub(s,"%.txt","")
+	s = string.gsub(s,"%.bytes","")
+	return Path.GetFileNameWithoutExtension(s)
+end
+
+local function log(self,fmt,...)	
+	local content = fmt		
+	if select('#', ...) > 0 then
+		local status, msg = pcall(string.format, fmt, ...)
+		if status then
+			content = msg
+		else
+			content = "Error formatting log message: " .. msg
+		end
+	end
+	
+	local info = debug.getinfo(3,"l")
+	return string.format("%s \nat (%s:%s)",content,self.fullname,info.currentline)
+end
+
+---
+--模块
+--@module Logger
+local M = class("Logger")
+
+function M.GetLogger(name)
+	local info = debug.getinfo(2,"S")
+	local fullname = info.source
+	name = name or toname(info.source) or "Logger"
+	
+	local log = LogManager.GetLogger(name)	
+	return M(log,fullname)
+end
+
+function M:ctor(log,fullname)
+	self.log = log
+	self.fullname = fullname
+end
+
+function M:debug(fmt,...)
+	if self.log.IsDebugEnabled then
+		self.log:Debug(log(self,fmt,...))
+	end
+end
+
+function M:info(fmt,...)
+	if self.log.IsInfoEnabled then
+		self.log:Info(log(self,fmt,...))
+	end
+end
+
+function M:warn(fmt,...)
+	if self.log.IsWarnEnabled then
+		self.log:Warn(log(self,fmt,...))
+	end
+end
+
+function M:error(fmt,...)
+	if self.log.IsErrorEnabled then
+		self.log:Error(log(self,fmt,...))
+	end
+end
+
+function M:fatal(fmt,...)
+	if self.log.IsFatalEnabled then
+		self.log:Fatal(log(self,fmt,...))
+	end
+end
+
+return M

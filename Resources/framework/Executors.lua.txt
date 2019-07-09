@@ -1,0 +1,58 @@
+require("framework.System")
+
+local util = require("xlua.util")
+local InterceptableEnumerator = CS.Loxodon.Framework.Execution.InterceptableEnumerator
+
+---
+--模块
+--@module Executors
+local M = class("Executors",CS.Loxodon.Framework.Execution.Executors)
+
+---
+--运行一个协程
+--示例如下：
+--function M.DoTask(n)
+--	for i = 1, n do
+--		coroutine.yield(nil)
+--	end
+--end
+--
+--Executors.RunLuaOnCoroutineNoReturn(function() self:DoTask(20) end)
+--
+--或者使用带参数的方式执行
+--Executors.RunLuaOnCoroutineNoReturn(self.DoTask,self,20)
+--
+--@param #function func Lua函数
+--@param #object[] ... Lua函数的参数
+--
+function M.RunLuaOnCoroutineNoReturn(func,...)
+	local ie = InterceptableEnumerator(util.cs_generator(func,...))	
+	ie:RegisterCatchBlock(function(e)
+			CS.UnityEngine.Debug.LogErrorFormat("{0}",e)
+		end)
+	M.RunOnCoroutineNoReturn(ie)
+end
+
+---
+--运行一个协程
+--示例如下：
+--function M.DoTask(n)
+--	for i = 1, n do
+--		coroutine.yield(nil)
+--	end
+--end
+--
+--return Executors.RunLuaOnCoroutine(function() self:DoTask(20) end)
+--
+--或者使用带参数的方式执行
+--return Executors.RunLuaOnCoroutine(self.DoTask,self,20)
+--
+--@param #function func Lua函数
+--@param #object[] ... Lua函数的参数
+--@return #userdata  返回一个C#对象IAsyncResult
+--
+function M.RunLuaOnCoroutine(func,...)
+	return M.RunOnCoroutine(util.cs_generator(func,...))
+end
+
+return M

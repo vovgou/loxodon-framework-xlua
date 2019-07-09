@@ -1,0 +1,12 @@
+﻿require("framework.System")
+
+---
+--模块
+--@module InteractionRequest
+local M = class("InteractionRequest",CS.Loxodon.Framework.Interactivity["InteractionRequest`1[System.Object]"])
+
+function M:Raise(context,callback)
+	M.base(self).Raise(self,context,callback)
+end
+
+return M

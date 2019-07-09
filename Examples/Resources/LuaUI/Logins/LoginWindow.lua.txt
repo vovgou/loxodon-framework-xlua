@@ -1,0 +1,39 @@
+﻿require("framework.System")
+
+local Loading = CS.Loxodon.Framework.Views.Loading
+local Toast = CS.Loxodon.Framework.Views.Toast
+
+---
+--模块
+--@module LoginWindow
+local M=class("LoginWindow",target)
+
+function M:onCreate(bundle)
+	local bindingSet = self:CreateBindingSet();
+
+	bindingSet:Bind():For("onInteractionFinished"):To("interactionFinished")
+    bindingSet:Bind():For("onToastShow"):To("toastRequest")
+
+	bindingSet:Bind(self.username):For ("text", "onEndEdit"):To ("username"):TwoWay ()
+	bindingSet:Bind(self.usernameErrorPrompt):For ("text"):To ("errors['username']"):OneWay ()
+	bindingSet:Bind(self.password):For ("text","onEndEdit"):To ("password"):TwoWay ()
+	bindingSet:Bind(self.passwordErrorPrompt):For ("text"):To ("errors['password']"):OneWay ()
+	bindingSet:Bind(self.confirmButton):For ("onClick"):To ("loginCommand")
+	bindingSet:Bind(self.cancelButton):For ("onClick"):To ("cancelCommand")
+	bindingSet:Build()
+end
+
+function M:onInteractionFinished(sender, args)
+    self:Dismiss()
+end
+
+function M:onToastShow(sender, args)
+    local notification = args.Context
+    if not notification then
+        return
+	end
+
+    Toast.Show(self, notification, 2);
+end
+
+return M

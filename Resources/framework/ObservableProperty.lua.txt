@@ -1,0 +1,1 @@
+﻿return CS.Loxodon.Framework.Observables["ObservableProperty`1[System.Object]"]
