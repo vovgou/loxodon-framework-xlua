@@ -10,9 +10,11 @@
 
 Loxodon.Framework框架的XLua插件，它是一个lua的MVVM框架，支持lua和c#混合编程或者也可以完全使用lua来编写您的整个游戏。
 
-## Require ##
+## 要求 ##
 
 [Loxodon Framework](https://github.com/cocowolf/loxodon-framework)
+
+本项目作为Loxodon.Framework插件，必须在Loxodon.Framework环境下使用，请在安装使用前先安装Loxodon.Framework框架。
 
 ## Quick start ##
 
