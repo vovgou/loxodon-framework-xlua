@@ -3,7 +3,7 @@
 # Loxodon Framework XLua
 
 [![license](https://img.shields.io/badge/license-MIT-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/blob/master/LICENSE)
-[![release](https://img.shields.io/badge/release-v1.1.0-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/releases)
+[![release](https://img.shields.io/badge/release-v1.1.2-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/releases)
 
 
 **要求Unity 5.6.0或者更高版本**
@@ -43,7 +43,7 @@ Loxodon.Framework框架的XLua插件，它是一个lua的MVVM框架，支持lua�
 
 使用Lua预编译工具可以将Lua脚本预编译为字节码文件，并且可以选择是否加密该文件。Lua官方的luac命令编译的字节码分64位和32位，如果想编译64位和32位兼容的字节码，请参考XLua的官方文件，有关通用字节码编译的部分[《通用字节码》](https://github.com/Tencent/xLua/blob/master/Assets/XLua/Doc/compatible_bytecode.md)。
 
-![](images/LuaPrecompileWizard.png)
+![](docs/images/LuaPrecompileWizard.png)
 
 
 - Bin:luac命令的路径，如果要编译64位或者32位或者两者相兼容的字节码，请选择对应的luac命令。
@@ -116,7 +116,7 @@ Loxodon.Framework框架的XLua插件，它是一个lua的MVVM框架，支持lua�
         }
     }
     
-![](images/LuaPrecompileWizard2.png)
+![](docs/images/LuaPrecompileWizard2.png)
 
 ## 联系方式
 邮箱: [yangpc.china@gmail.com](mailto:yangpc.china@gmail.com)   
