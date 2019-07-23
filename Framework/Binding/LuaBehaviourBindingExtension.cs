@@ -40,7 +40,7 @@ namespace Loxodon.Framework.Binding.Lua
             IBindingContext bindingContext = bindingContextLifecycle.BindingContext;
             if (bindingContext == null)
             {
-                bindingContext = new BindingContext(Binder);
+                bindingContext = new BindingContext(behaviour,Binder);
                 bindingContextLifecycle.BindingContext = bindingContext;
             }
             return bindingContext;
