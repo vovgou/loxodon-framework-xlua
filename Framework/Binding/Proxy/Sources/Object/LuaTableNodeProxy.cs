@@ -72,6 +72,12 @@ namespace Loxodon.Framework.Binding.Proxy.Sources.Object
             {
                 this.Unsubscribe();
 
+                if (disposing)
+                {
+                    if (table != null)
+                        table.Dispose();
+                }
+
                 disposed = true;
                 base.Dispose(disposing);
             }

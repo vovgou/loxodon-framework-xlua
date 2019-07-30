@@ -5,7 +5,7 @@ using XLua;
 
 namespace Loxodon.Framework.Binding.Proxy
 {
-    public class LuaInvoker : IScriptInvoker
+    public class LuaInvoker : IScriptInvoker, IDisposable
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(LuaInvoker));
 
@@ -45,6 +45,37 @@ namespace Loxodon.Framework.Binding.Proxy
             }
             return null;
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (function != null)
+                    {
+                        function.Dispose();
+                        function = null;
+                    }
+                }
+                disposedValue = true;
+            }
+        }
+
+        ~LuaInvoker()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
 #endif
