@@ -3,7 +3,7 @@
 # Loxodon Framework XLua
 
 [![license](https://img.shields.io/badge/license-MIT-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/blob/master/LICENSE)
-[![release](https://img.shields.io/badge/release-v1.1.3-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/releases)
+[![release](https://img.shields.io/badge/release-v1.1.4-blue.png)](https://github.com/cocowolf/loxodon-framework-xlua/releases)
 
 
 **要求Unity 5.6.0或者更高版本**
