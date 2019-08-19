@@ -28,6 +28,10 @@ local Context = CS.Loxodon.Framework.Contexts.Context
 local LuaBindingServiceBundle = CS.Loxodon.Framework.Binding.LuaBindingServiceBundle
 local ObservableObject = require("framework.ObservableObject")
 local ObservableDictionary = require("framework.ObservableDictionary")
+local Locale = CS.Loxodon.Framework.Localizations.Locale
+local Localization = CS.Loxodon.Framework.Localizations.Localization
+local DefaultDataProvider = CS.Loxodon.Framework.Localizations.DefaultDataProvider
+local XmlDocumentParser = CS.Loxodon.Framework.Localizations.XmlDocumentParser
 
 ---
 --创建一个Account子视图模型
@@ -95,7 +99,11 @@ local M = class("DatabindingExample",target)
 function M:awake()
 	local context = Context.GetApplicationContext()
 	local container = context:GetContainer()
-	
+
+	--初始化本地化资源
+	local cultureInfo = Locale.GetCultureInfo()
+    Localization.Current = Localization.Create(DefaultDataProvider("LocalizationTutorials", XmlDocumentParser()), cultureInfo);
+
 	--初始化Lua的数据绑定服务，一般建议在游戏的C#启动脚本创建
 	local bundle = LuaBindingServiceBundle(container)
 	bundle:Start();

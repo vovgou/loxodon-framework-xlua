@@ -224,7 +224,14 @@ namespace Loxodon.Framework.XLua.Editors
                         this.extensions.Clear();
                         foreach (string ext in this.extensionsStr.Split(','))
                         {
-                            this.extensions.Add(ext);
+                            string extension = ext.Trim();
+                            if (string.IsNullOrEmpty(extension))
+                                continue;
+
+                            if (!extension.StartsWith("."))
+                                extension = "." + extension;
+
+                            this.extensions.Add(extension);
                         }
                     }
                     GUI.FocusControl(null);

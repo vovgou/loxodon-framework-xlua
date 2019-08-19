@@ -104,6 +104,11 @@ namespace Loxodon.Framework.Editors
             typeof(Func<object>),
             typeof(IViewModel)
         };
+
+        [BlackList]
+        public static List<List<string>> BlackList = new List<List<string>>()  {
+               new List<string>(){"System.Type", "IsSZArray"}
+        };
     }
 }
 #endif
