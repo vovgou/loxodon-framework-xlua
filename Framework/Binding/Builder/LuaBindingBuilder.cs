@@ -75,7 +75,6 @@ namespace Loxodon.Framework.Binding.Builder
         public LuaBindingBuilder ToValue(object value)
         {
             this.SetLiteral(value);
-            this.OneTime();
             return this;
         }
 

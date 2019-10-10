@@ -56,7 +56,7 @@ namespace Loxodon.Framework.Examples
         {
             GlobalWindowManager windowManager = FindObjectOfType<GlobalWindowManager>();
             if (windowManager == null)
-                throw new NotFoundException("Can't find the GlobalWindowManager.");
+                throw new NotFoundException("Not found the GlobalWindowManager.");
 
             context = Context.GetApplicationContext();
 
@@ -70,9 +70,11 @@ namespace Loxodon.Framework.Examples
             container.Register<IUIViewLocator>(new ResourcesViewLocator());
 
             /* Initialize the localization service */
-            //		CultureInfo cultureInfo = Locale.GetCultureInfoByLanguage (SystemLanguage.English);
+            //CultureInfo cultureInfo = Locale.GetCultureInfoByLanguage (SystemLanguage.English);
             CultureInfo cultureInfo = Locale.GetCultureInfo();
-            Localization.Current = Localization.Create(new ResourcesDataProvider("LocalizationExamples", new XmlDocumentParser()), cultureInfo);
+            var localization = Localization.Current;
+            localization.CultureInfo = cultureInfo;
+            localization.AddDataProvider(new ResourcesDataProvider("LocalizationExamples", new XmlDocumentParser()));
 
             /* register Localization */
             container.Register<Localization>(Localization.Current);

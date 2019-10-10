@@ -90,18 +90,11 @@ namespace Loxodon.Framework.Binding.Proxy.Sources.Expressions
                         }
                         this.inners.Clear();
                     }
-
-                    if (func != null)
-                    {
-                        func.Dispose();
-                        func = null;
-                    }
                 }
                 disposed = true;
                 base.Dispose(disposing);
             }
         }
     }
-
 }
 #endif
