@@ -48,13 +48,13 @@ local Cat = class("Cat",Animal)
 -- Cat类的构造函数
 function Cat:ctor()
 	-- 重载了构造函数，会覆盖父类构造函数，通过如下显示的调用父类构造函数
-	Cat.base(self).ctor(self)
+	Cat.super.ctor(self)
 	self.age = 5
 end
 
 -- 重载父类Animal的同名方法
 function Cat:walk()
-	Cat.base(self).walk(self)
+	Cat.super.walk(self)
 	print("cat walk")
 end
 
@@ -103,7 +103,12 @@ function class(classname,super)
 	
 	local cls = {}
 	cls.__classname = classname
-	cls.__class = cls	
+	cls.__class = cls
+	
+	--创建一个base(self)函数，通过来访问父类的函数和属性，新版本请使用super对象
+	cls.base = function(self)
+		return cls.super
+	end
 	
 	if isCSharpInstance and super.__type == 2 then
 		--不允许多次扩展一个C#的实例
@@ -112,57 +117,47 @@ function class(classname,super)
 	
 	if isCSharpInstance then
 		--直接扩展一个C#的实例
-		cls.super = super
-		cls.__type = 2 --extends C# instance				
-	
-		--创建一个base(self)函数，通过来访问父类的函数和属性
-		cls.base = function(self)
-			if not rawget(cls,"__base") then				
-				local base_meta = {}
-				
-				local instance_meta = getmetatable(self)
-				local original_indexer = instance_meta.__original_indexer
-				base_meta.__index = function(t, k)					
-					return original_indexer(self, k)
-				end
-				
-				cls.__base = setmetatable({},base_meta)
-			end
-			return cls.__base
-		end
+		cls.super = nil --扩展C#实例，在extends函数中设置super
+		cls.__type = 2 --extends C# instance	
 		
 		-- 通过extends函数来扩展一个C#类的实例
 		return extends(super,cls)
-	elseif isCSharpType and (not super.__type or super.__type == 1) then
-		-- 通过传入C#类型的方式继承C#的类，包括静态类
-		cls.super = super
+	elseif (isCSharpType and not super.__type) or superType == "function" then
+		-- 通过传入C#类型的方式或者通过传入C#类创建函数的方式，继承C#的类，包括静态类
+		cls.super = nil --继承C#类，在extends函数中设置super
 		cls.__type = 1
+		cls.ctor = function(...) end
 		
-		if not super.__create then
+		if isCSharpType and not super.__type then
 			-- 父类是一个C#类，Lua第一次继承，没有__create函数
+			
+			-- 拷贝C#类表中的值到cls类
+			for k, v in pairs(super) do rawset(cls, k, v) end
+			
 			cls.__create = function(...)
 				return super(...)
 			end
+		elseif superType == "function" then
+			cls.__create = super			
 		end
 		
-		--创建一个base(self)函数，通过来访问父类的函数和属性
-		cls.base = function(self)			
-			if not rawget(cls,"__base") then				
-				local base_meta = {}	
-				base_meta.__index = function(t, k)
-					local ret = super[k]
-					if ret then return ret end
-					
-					local instance_meta = getmetatable(self)
-					local original_indexer = instance_meta.__original_indexer
-					return original_indexer(self, k)
-				end
-				
-				cls.__base = setmetatable({},base_meta)			
-			end
-			return cls.__base
-		end
+		setmetatable(cls,{__call=function(t,...)
+					--通过extends函数替换C#实例的原表实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
+					local instance = t.__create(...)
+					extends(instance,t)
+					--instance.__class = t
+					instance:ctor(...)
+					return instance
+				end})
 		
+		return cls	
+	elseif super and super.__type == 1 then
+		-- 继承C#类
+		
+		cls.super = super
+		cls.__type = 1
+		cls.__create = super.__create
+			
 		setmetatable(cls,{__index = super,__call=function(t,...)
 					--通过extends函数替换C#实例的原表实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
 					local instance = t.__create(...)
@@ -177,77 +172,13 @@ function class(classname,super)
 		end
 		
 		return cls
-	elseif superType == "function" or (super and super.__type == 3) then
-		-- 通过传入C#创建函数的方式继承C#的类
-		cls.super = nil
-		cls.__type = 3
-		
-		--创建一个base(self)函数，通过来访问父类的函数和属性
-		cls.base = function(self)			
-			if not rawget(cls,"__base") then				
-				local base_meta = {}	
-				base_meta.__index = function(t, k)
-					
-					if superType == "table" then
-						local ret = super[k]
-						if ret then return ret end
-					end
-					
-					local instance_meta = getmetatable(self)
-					local original_indexer = instance_meta.__original_indexer
-					return original_indexer(self, k)
-				end
-				
-				cls.__base = setmetatable({},base_meta)			
-			end
-			return cls.__base
-		end
-		
-		if superType == "table" then
-			-- 这里super是一个继承了C#类的Lua表
-			cls.__create = super.__create
-			cls.super = super
-			
-			setmetatable(cls,{__index = super,__call = function(t,...)
-						--通过extends函数替换C#实例的原表实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
-						local instance = t.__create(...)
-						extends(instance,t)
-						--instance.__class = t
-						instance:ctor(...)
-						return instance
-					end})
-		else
-			-- 这里super是一个C#类的实例创建函数。
-			cls.__create = super
-			cls.ctor = function(...) end
-			
-			setmetatable(cls, {__call=function(t,...)
-						--通过extends函数替换C#实例的原表实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
-						local instance = t.__create(...)
-						extends(instance,t)
-						--instance.__class = t
-						instance:ctor(...)
-						return instance
-					end})
-		end
-		
-		if not cls.ctor then
-			cls.ctor = function(...) end
-		end
-		
-		return cls
 	else
 		-- 继承Lua对象
 		cls.__type = 0 -- lua
 		cls.super = super
 		cls.__index = cls
 		
-		if super then
-			--创建一个base(self)函数，通过来访问父类的函数和属性
-			cls.base = function(self)
-				return cls.super
-			end
-			
+		if super then			
 			setmetatable(cls,{__index = super,__call = function(t,...)
 						--采用设置类表为新的实例表的元表的方式实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
 						local instance=setmetatable({}, t)
@@ -256,6 +187,7 @@ function class(classname,super)
 						return instance
 					end})
 		else
+			cls.ctor = function(...) end
 			setmetatable(cls, {__call=function(t,...)
 						--采用设置类表为新的实例表的元表的方式实现继承，如果类还通过元表继承了父类，父类方法和属性同样有效
 						local instance=setmetatable({}, t)
@@ -287,18 +219,21 @@ function extends(target,cls)
 	
 	if cls then
 		-- 继承cls中的属性和方法
+		meta.super = cls
 		setmetatable(meta,{__index = cls})
 	end
 	
-	local original_meta = getmetatable(target)
-	
+	local original_meta = getmetatable(target)	
 	local original_indexer = original_meta.__index
 	local original_newindexer = original_meta.__newindex
 	
-	for k, v in pairs(original_meta) do rawset(meta, k, v) end	
+	for k, v in pairs(original_meta) do rawset(meta, k, v) end
 	
-	meta.__original_indexer = original_indexer
-	meta.__original_newindexer = original_newindexer
+	--meta.__original_indexer = original_indexer
+	--meta.__original_newindexer = original_newindexer
+	meta.__target = target
+	meta.__type = 2 --extends C# instance
+	meta.__original_meta = original_meta
 	
 	meta.__index = function(t, k)
 		return meta[k] or original_indexer(t, k)
@@ -322,6 +257,23 @@ function extends(target,cls)
 	meta.__call = function(...)
 		error(string.format("Unsupported operation, this is an instance of the '%s' class.",meta.__name))
 	end
+	
+	--创建一个可以访问C#对象函数和属性的root对象，用来作为Lua扩展类的父类
+	local root = original_meta.__root
+	if not root then
+		root = setmetatable({__classname = original_meta.__name},{__index = original_indexer,__newindex = original_newindexer})	
+		original_meta.__root = root
+	end
+	
+	--检查meta的super，如果没有继承root，则设置为继承root
+	local t = meta
+	repeat
+		if not t.super then
+			rawset(t, "super", root)
+		end
+		
+		t = t.super
+	until(t == root)
 	
 	debug.setmetatable(target, meta)
 	return meta
